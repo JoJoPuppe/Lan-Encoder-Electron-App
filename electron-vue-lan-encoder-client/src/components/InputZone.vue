@@ -4,21 +4,33 @@
         ref="inputzone"
         tabindex="0"
         title="Add Input File"
-        color="primary"
         width="100"
+        outlined
+        rounded="lg"
         height="100"
-        class="pa-2 input_zone"
+        class="pa-2 blue-grey" 
+        v-bind:class="[hasElement ? hasElementClass : '', noElementClass]"
         @dragover="dragover"
         @dragleave="dragleave"
         @drop="drop"
     >
         <input
         type="file"
-        accept="text/xml"
+        accept="image/*, video/*, audio/*"
         @change="onChange"
         ref="file"
         style="display:none"/>
+        <div class='d-flex align-center'>
+            <p v-if="this.fileList.length">{{ fileList[0].path }}</p>
+            <div class='center'>
+                <v-icon>
+                    mdi-download
+                </v-icon>
+                <h3 class="white--text">Input File</h3>
+            </div>
+            <v-btn fab @click="remove_file"><v-icon>mdi-close</v-icon></v-btn>
 
+        </div>
     </v-sheet>
 </template>
 
@@ -29,38 +41,45 @@ export default Vue.extend({
     name: "App",
     data: () => ({
         fileList: [] as Array<any>,
+        hasElement: false,
+        hasElementClass: "darken-1",
+        noElementClass: "lighten-5",
     }),
     methods: {
-        filesSelected(fileList: FileList) {
-            this.$emit("files-selected", fileList)
-            console.log(fileList[0].path)
-        },
         onChange() {
-            this.filelist = [...this.$refs.file.files];
+            this.fileList = [...(this.$refs['file'] as any).files];
+            console.log(this.fileList)
         },
-        remove(i: number) {
-            this.filelist.splice(i, 1);
+        remove_file() {
+            this.hasElement = false;
+            this.fileList.pop();
         },
         dragover(event: DragEvent) {
             event.preventDefault();
-            // Add some visual fluff to show the user can drop its files
-            if (!event.currentTarget.classList.contains('bg-green-300')) {
-                event.currentTarget.classList.remove('bg-gray-100');
-                event.currentTarget.classList.add('bg-green-300');
+            const target_el = event.currentTarget as HTMLInputElement
+            if (!target_el.classList.contains('primary')) {
+                target_el.classList.remove('blue-grey');
+                target_el.classList.add('primary');
             }
         },
-        dragleave(event) {
+        dragleave(event: DragEvent) {
             // Clean up
-            event.currentTarget.classList.add('bg-gray-100');
-            event.currentTarget.classList.remove('bg-green-300');
+            const target_el = event.currentTarget as HTMLInputElement
+            target_el.classList.add('blue-grey');
+            target_el.classList.remove('primary');
         },
-        drop(event) {
-            event.preventDefault();
-            this.$refs.file.files = event.dataTransfer.files;
+        drop(event: DragEvent) {
+            const data_trans = event.dataTransfer;
+            if (data_trans !== null){
+                (this.$refs['file'] as any).files = data_trans.files;
+            }
             this.onChange(); // Trigger the onChange event manually
-            // Clean up
-            event.currentTarget.classList.add('bg-gray-100');
-            event.currentTarget.classList.remove('bg-green-300');
+            this.$emit("files-selected", (this.$refs['file'] as any).files);
+            this.hasElement = true;
+
+            const target_el = event.currentTarget as HTMLInputElement
+            target_el.classList.remove('primary');
+            target_el.classList.add('blue-grey');
         }
     },
 });

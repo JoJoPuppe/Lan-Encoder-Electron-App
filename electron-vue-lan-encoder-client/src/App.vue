@@ -20,6 +20,7 @@ import {WebsocketBuilder} from "websocket-ts";
 import InputZone from './components/InputZone.vue'
 
 
+
 interface presetData {
     preset_name: string;
     preset_cmd: string;
@@ -64,7 +65,6 @@ export default Vue.extend({
         .onOpen((ws, e) => { console.log('connected') })
         .onMessage((ws, e) => { this.check_json_data(e.data) })
         .build();
-
     },
     computed: {
         make_preset_list(){
@@ -81,7 +81,7 @@ export default Vue.extend({
         logFiles(fileList: FileList) {
             for(const item of fileList) {
             // eslint-disable-next-line
-                console.log(item.name)
+                console.log(item.path)
             }
         },
         check_json_data(data: string){
