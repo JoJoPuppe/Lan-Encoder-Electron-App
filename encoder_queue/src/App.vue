@@ -2,12 +2,12 @@
     <v-app>
     <v-container class="pa-6">
     <v-form @submit.prevent="onSubmit">
-        <InputZone v-on:files-selected="logFiles" :field_name="input_string"></InputZone>
+        <InputZone v-on:files-selected="setInputPath" :field_name="input_string"></InputZone>
             <div class="d-flex">
                 <v-text-field label='Input Path' required type="text" v-model="input_path" class="form-control"></v-text-field>
                 <v-checkbox label="Same Output Path" v-model="same_path"></v-checkbox>
             </div>
-            <InputZone v-on:files-selected="logFiles" :field_name="output_string" v-if="!same_path"></InputZone>
+            <InputZone v-on:files-selected="setOutputPath" :field_name="output_string" v-if="!same_path"></InputZone>
             <v-text-field label='Output Path' type="text" v-model="output_path" class="form-control" v-if="!same_path"></v-text-field>
             <div class="d-flex">
                 <v-select class="mx-2" :items='make_format_list' required label='Format' v-model='format'></v-select>
@@ -111,6 +111,12 @@ export default Vue.extend({
             // eslint-disable-next-line
                 console.log(item.path)
             }
+        },
+        setOutputPath(fileList) {
+            this.output_path = fileList[0].path
+        },
+        setInputPath(fileList) {
+            this.input_path = fileList[0].path
         },
         check_json_data(data){
             let json_data = JSON.parse(data)
