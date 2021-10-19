@@ -6,7 +6,7 @@
         title="Add Input File"
         width="100%"
         rounded="lg"
-        class="py-6 mr-6 blue-grey lighten-5" 
+        class="py-6 mr-6 mb-4 blue-grey lighten-5" 
         v-bind:class="[hasElement ? hasElementClass : '', noElementClass]"
         @dragover="dragover"
         @dragleave="dragleave"

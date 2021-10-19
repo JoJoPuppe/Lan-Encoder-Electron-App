@@ -1,24 +1,39 @@
 <template>
     <v-app>
-    <v-container class="pa-6">
-    <v-form @submit.prevent="onSubmit">
-        <InputZone v-on:files-selected="setInputPath" :field_name="input_string"></InputZone>
-            <div class="d-flex">
-                <v-text-field label='Input Path' required type="text" v-model="input_path" class="form-control"></v-text-field>
+    <v-sheet class="pa-6" height="100%">
+        <v-form @submit.prevent="onSubmit">
+        <div class="">
+            <InputZone class='' v-on:files-selected="setInputPath" :field_name="input_string"></InputZone>
+                <InputZone class="mt-4" v-on:files-selected="setOutputPath" :field_name="output_string" v-if="!same_path"></InputZone>
+                <v-row>
+                    <v-col cols=3>
+                        <v-select class="mx-2" :items='make_format_list' required label='Format' v-model='format'></v-select>
+                    </v-col>
+                    <v-col cols=3>
+                        <v-select class="mx-2" :items='make_codec_list' required label='V-Codec' v-model='v_codec' v-if="format != ''"></v-select>
+                    </v-col>
+                    <v-col cols=6>
+                        <v-select class="mx-2" :items='make_options_list' required label='Codec Options' v-model='v_option' v-if="v_codec != ''"></v-select>
+                    </v-col>
+                </v-row>
+
+        </div>
+        <div class="">
+
                 <v-checkbox label="Same Output Path" v-model="same_path"></v-checkbox>
-            </div>
-            <InputZone v-on:files-selected="setOutputPath" :field_name="output_string" v-if="!same_path"></InputZone>
-            <v-text-field label='Output Path' type="text" v-model="output_path" class="form-control" v-if="!same_path"></v-text-field>
-            <div class="d-flex">
-                <v-select class="mx-2" :items='make_format_list' required label='Format' v-model='format'></v-select>
-                <v-select class="mx-2" :items='make_codec_list' required label='V-Codec' v-model='v_codec' v-if="format != ''"></v-select>
-                <v-select class="mx-2" :items='make_options_list' required label='Codec Options' v-model='v_option' v-if="v_codec != ''"></v-select>
-            </div>
-
-
-            <v-btn class='mt-4 primary'  type='submit' elevation='2' v-if="v_option != '' && input_path != ''">encode</v-btn>
-    </v-form>
-    </v-container>
+                <v-btn class='mt-4 primary' :disabled="v_option == ''"  type='submit' elevation='2'>encode</v-btn>
+                <div v-if="connected_websocket">
+                    <v-chip
+                    class="ma-2"
+                    color="green"
+                    text-color="white"
+                    >
+                    connected
+                    </v-chip>
+                </div>
+        </div>
+        </v-form>
+    </v-sheet>
     </v-app>
 </template>
 
@@ -51,12 +66,14 @@ export default Vue.extend({
     v_codec: "",
     v_option: "",
     same_path: true,
+    connected_websocket: false,
   }),
     created() {
         console.log("Starting connection to WebSocket Server");
         this.connection = new WebSocket("ws://localhost:8000/current_encoding");
         this.connection.onopen = (event) => {
             console.log("Successfully connected to the echo websocket server...");
+            this.connected_websocket = true;
             console.log(event)
         }
     },
@@ -64,12 +81,26 @@ export default Vue.extend({
         this.connection.onmessage = (event) => {
             this.check_json_data(event.data);
         }
+        this.connection.onclose = () => {
+            this.connected_websocket = false;
+        }
+        this.connection.onerror = (event) => {
+            console.log(event.data)
+            this.connected_websocket = false;
+        }
+
     },
     watch: {
         format: function (){
             this.v_option = "";
             this.v_codec = "";
         },
+        connected_websocket: function(){
+            if (this.connected_websocket == false){
+                setTimeout(
+                    this.reconnect, 5000);
+            }
+        }
     },
     computed: {
         make_format_list(){
@@ -106,6 +137,15 @@ export default Vue.extend({
         }
     },
     methods: {
+        reconnect(){
+            console.log("reconnected");
+            this.connection = new WebSocket("ws://localhost:8000/current_encoding");
+            this.connection.onopen = (event) => {
+                console.log("Successfully connected to the echo websocket server...");
+                this.connected_websocket = true;
+                console.log(event)
+            }
+        },
         logFiles(fileList) {
             for(const item of fileList) {
             // eslint-disable-next-line
